@@ -4,9 +4,9 @@
 
 **Limen** is a self-hosted infrastructure platform. One tool does what normally takes three:
 
-- **Docker deploy management** — auto-deploy services from registry image updates (like Coolify)
-- **Reverse proxy with automatic TLS** — public ingress, routing, Let's Encrypt (like Traefik/Caddy)
-- **WireGuard hub-and-spoke VPN** — connect remote sites without public inbound ports (like Pangolin)
+- **Docker deploy management** — auto-deploy services when their container image is updated in a registry
+- **Reverse proxy with automatic TLS** — public ingress, hostname routing, Let's Encrypt certificates
+- **WireGuard hub-and-spoke VPN** — connect remote sites without opening inbound ports on them
 
 One admin. One Angular UI. PostgreSQL-only. Docker compose to install. Apache 2.0.
 
