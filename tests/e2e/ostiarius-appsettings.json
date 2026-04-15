@@ -1,0 +1,19 @@
+{
+  "Ostiarius": {
+    "LimenUrl": "ws://limen:8080",
+    "ProxyNodeId": "",
+    "AgentSecret": ""
+  },
+  "Acme": {
+    "Enabled": false
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information",
+      "Yarp": "Information"
+    }
+  },
+  "AllowedHosts": "*"
+}
