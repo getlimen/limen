@@ -1,21 +1,27 @@
 import { Component, inject } from '@angular/core';
+import { HlmButton } from '@spartan-ng/helm/button';
+import { HlmSeparator } from '@spartan-ng/helm/separator';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'limen-dashboard',
   standalone: true,
+  imports: [HlmButton, HlmSeparator],
   template: `
     <div class="p-8">
-      <header class="flex justify-between items-center mb-8">
+      <header class="flex justify-between items-center mb-4">
         <h1 class="text-3xl font-bold">Limen</h1>
         <div class="flex items-center gap-4">
-          <span class="text-sm text-slate-600">{{ auth.admin()?.email }}</span>
-          <button (click)="auth.signOut()" class="px-3 py-1 text-sm border rounded">Sign out</button>
+          <span class="text-sm text-muted-foreground">{{ auth.admin()?.email }}</span>
+          <button hlmBtn variant="outline" size="sm" (click)="auth.signOut()">Sign out</button>
         </div>
       </header>
-      <section class="text-slate-500">
+      <div hlmSeparator class="mb-8"></div>
+      <section class="text-muted-foreground">
         No nodes enrolled yet.
       </section>
     </div>`,
 })
-export class DashboardComponent { auth = inject(AuthService); }
+export class DashboardComponent {
+  auth = inject(AuthService);
+}

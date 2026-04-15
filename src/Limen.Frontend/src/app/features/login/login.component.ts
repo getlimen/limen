@@ -1,18 +1,33 @@
 import { Component, inject } from '@angular/core';
+import { HlmButton } from '@spartan-ng/helm/button';
+import {
+  HlmCard,
+  HlmCardContent,
+  HlmCardDescription,
+  HlmCardHeader,
+  HlmCardTitle,
+} from '@spartan-ng/helm/card';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'limen-login',
   standalone: true,
+  imports: [HlmButton, HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardContent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-slate-50">
-      <div class="p-8 bg-white rounded-lg shadow-md max-w-sm w-full text-center">
-        <h1 class="text-2xl font-bold mb-4">Limen</h1>
-        <p class="text-slate-600 mb-6">Sign in to manage your infrastructure.</p>
-        <button (click)="auth.login()" class="w-full px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800">
-          Sign in with OIDC
-        </button>
-      </div>
+    <div class="min-h-screen flex items-center justify-center bg-background p-4">
+      <section hlmCard class="w-full max-w-sm">
+        <header hlmCardHeader>
+          <h1 hlmCardTitle class="text-2xl">Limen</h1>
+          <p hlmCardDescription>Sign in to manage your infrastructure.</p>
+        </header>
+        <div hlmCardContent>
+          <button hlmBtn class="w-full" (click)="auth.login()">
+            Sign in with OIDC
+          </button>
+        </div>
+      </section>
     </div>`,
 })
-export class LoginComponent { auth = inject(AuthService); }
+export class LoginComponent {
+  auth = inject(AuthService);
+}
