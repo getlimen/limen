@@ -10,6 +10,7 @@ using Npgsql;
 var builder = WebApplication.CreateBuilder(args);
 
 #region Configure Services
+builder.Services.AddOpenApi();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
@@ -98,6 +99,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapOpenApi();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 
