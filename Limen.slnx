@@ -3,6 +3,7 @@
     <Project Path="contracts/Limen.Contracts/Limen.Contracts.csproj" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Limen.Application/Limen.Application.csproj" />
     <Project Path="src/Limen.Domain/Limen.Domain.csproj" />
   </Folder>
 </Solution>
