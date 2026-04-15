@@ -23,8 +23,7 @@ public static class AgentsWebSocketEndpoint
 
     private static async Task<IResult> HandleAsync(
         HttpContext ctx,
-        IMediator mediator,
-        IAppDbContext db,
+        IServiceScopeFactory scopeFactory,
         IAgentConnectionRegistry registry,
         ILogger<AgentWebSocketChannel> logger,
         CancellationToken abort)
@@ -54,6 +53,8 @@ public static class AgentsWebSocketEndpoint
             if (type == AgentMessageTypes.Enroll)
             {
                 var payload = firstDoc.RootElement.GetProperty("Payload").Deserialize<EnrollRequest>()!;
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 var result = await mediator.Send(new EnrollAgentCommand(
                     payload.ProvisioningKey, payload.Hostname, payload.Roles, payload.Platform, payload.AgentVersion),
                     abort);
@@ -78,6 +79,8 @@ public static class AgentsWebSocketEndpoint
                     return Results.Empty;
                 }
                 var secretHash = SHA256.HashData(Encoding.UTF8.GetBytes(parts[1]));
+                await using var scope = scopeFactory.CreateAsyncScope();
+                var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
                 var agent = await db.Agents.FindAsync(new object[] { agentId }, abort);
                 if (agent is null || !agent.SecretHash.SequenceEqual(secretHash))
                 {
@@ -103,16 +106,24 @@ public static class AgentsWebSocketEndpoint
 
         await registry.RegisterAsync(agentId, channel);
 
-        var nodeForAgent = await db.Agents
-            .Where(a => a.Id == agentId)
-            .Select(a => a.NodeId)
-            .FirstOrDefaultAsync(abort);
-        var node = nodeForAgent == Guid.Empty ? null : await db.Nodes.FindAsync(new object[] { nodeForAgent }, abort);
-        if (node is not null)
+        // Update node status to Active using a short-lived scope
+        await using (var handshakeScope = scopeFactory.CreateAsyncScope())
         {
-            node.Status = NodeStatus.Active;
-            node.LastSeenAt = DateTimeOffset.UtcNow;
-            await db.SaveChangesAsync(abort);
+            var db = handshakeScope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var nodeId = await db.Agents
+                .Where(a => a.Id == agentId)
+                .Select(a => a.NodeId)
+                .FirstOrDefaultAsync(abort);
+            if (nodeId != Guid.Empty)
+            {
+                var node = await db.Nodes.FindAsync(new object[] { nodeId }, abort);
+                if (node is not null)
+                {
+                    node.Status = NodeStatus.Active;
+                    node.LastSeenAt = DateTimeOffset.UtcNow;
+                    await db.SaveChangesAsync(abort);
+                }
+            }
         }
 
         try
@@ -131,21 +142,39 @@ public static class AgentsWebSocketEndpoint
 
                 using var msg = JsonDocument.Parse(Encoding.UTF8.GetString(buf, 0, r.Count));
                 var msgType = msg.RootElement.GetProperty("Type").GetString();
-                if (msgType == AgentMessageTypes.Heartbeat && node is not null)
+
+                await using var frameScope = scopeFactory.CreateAsyncScope();
+                var frameDb = frameScope.ServiceProvider.GetRequiredService<IAppDbContext>();
+                var frameMediatorSvc = frameScope.ServiceProvider;
+
+                if (msgType == AgentMessageTypes.Heartbeat)
                 {
-                    node.LastSeenAt = DateTimeOffset.UtcNow;
-                    await db.SaveChangesAsync(abort);
+                    var nodeId = await frameDb.Agents
+                        .Where(a => a.Id == agentId)
+                        .Select(a => a.NodeId)
+                        .FirstOrDefaultAsync(abort);
+                    if (nodeId != Guid.Empty)
+                    {
+                        var node = await frameDb.Nodes.FindAsync(new object[] { nodeId }, abort);
+                        if (node is not null)
+                        {
+                            node.LastSeenAt = DateTimeOffset.UtcNow;
+                            await frameDb.SaveChangesAsync(abort);
+                        }
+                    }
                     await channel.SendJsonAsync(AgentMessageTypes.HeartbeatAck, new HeartbeatAck(0), abort);
                 }
                 else if (msgType == AgentMessageTypes.DeployProgress)
                 {
                     var progress = msg.RootElement.GetProperty("Payload").Deserialize<DeployProgress>()!;
+                    var mediator = frameMediatorSvc.GetRequiredService<IMediator>();
                     await mediator.Send(new ReportDeploymentProgressCommand(
                         progress.DeploymentId, progress.Stage, progress.Message, progress.PercentComplete), abort);
                 }
                 else if (msgType == AgentMessageTypes.DeployResult)
                 {
                     var result = msg.RootElement.GetProperty("Payload").Deserialize<DeployResult>()!;
+                    var mediator = frameMediatorSvc.GetRequiredService<IMediator>();
                     await mediator.Send(new ReportDeploymentResultCommand(
                         result.DeploymentId, result.Success, result.RolledBackReason), abort);
                 }
@@ -158,17 +187,28 @@ public static class AgentsWebSocketEndpoint
         finally
         {
             registry.Unregister(agentId);
-            if (node is not null)
+            // Update node status to Disconnected using a fresh scope
+            await using var disconnectScope = scopeFactory.CreateAsyncScope();
+            try
             {
-                node.Status = NodeStatus.Disconnected;
-                try
+                var db = disconnectScope.ServiceProvider.GetRequiredService<IAppDbContext>();
+                var nodeId = await db.Agents
+                    .Where(a => a.Id == agentId)
+                    .Select(a => a.NodeId)
+                    .FirstOrDefaultAsync(CancellationToken.None);
+                if (nodeId != Guid.Empty)
                 {
-                    await db.SaveChangesAsync(CancellationToken.None);
+                    var node = await db.Nodes.FindAsync(new object[] { nodeId }, CancellationToken.None);
+                    if (node is not null)
+                    {
+                        node.Status = NodeStatus.Disconnected;
+                        await db.SaveChangesAsync(CancellationToken.None);
+                    }
                 }
-                catch (Exception e)
-                {
-                    logger.LogWarning(e, "Failed to persist disconnected status for node {NodeId}", node.Id);
-                }
+            }
+            catch (Exception e)
+            {
+                logger.LogWarning(e, "Failed to persist disconnected status for agent {AgentId}", agentId);
             }
         }
 
