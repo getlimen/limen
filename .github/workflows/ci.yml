@@ -11,9 +11,7 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with: { dotnet-version: '10.0.x' }
       - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: corepack enable && corepack prepare npm@11.6.2 --activate
+        with: { node-version: '22' }
 
       - run: dotnet restore
       - run: dotnet build --configuration Release --no-restore
