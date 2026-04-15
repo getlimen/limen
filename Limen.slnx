@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/contracts/">
+    <Project Path="contracts/Limen.Contracts/Limen.Contracts.csproj" />
+  </Folder>
+</Solution>
