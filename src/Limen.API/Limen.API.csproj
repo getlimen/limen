@@ -8,6 +8,11 @@
     <ProjectReference Include="..\Limen.Infrastructure\Limen.Infrastructure.csproj" />
   </ItemGroup>
 
+  <Target Name="PublishAngular" BeforeTargets="PrepareForPublish">
+    <Exec Command="npm ci" WorkingDirectory="../Limen.Frontend" />
+    <Exec Command="npm run build -- --output-path=../Limen.API/wwwroot --base-href=/" WorkingDirectory="../Limen.Frontend" />
+  </Target>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

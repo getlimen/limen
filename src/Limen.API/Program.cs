@@ -54,6 +54,10 @@ try
     app.MapHealthEndpoints();
     app.MapAuthEndpoints();
 
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+    app.MapFallbackToFile("index.html");
+
     app.Run();
 }
 catch (Exception ex)
