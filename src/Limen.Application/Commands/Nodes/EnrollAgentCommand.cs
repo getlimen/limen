@@ -1,13 +1,18 @@
 using System.Security.Cryptography;
 using System.Text;
 using Limen.Application.Common.Interfaces;
+using Limen.Contracts.AgentMessages;
 using Limen.Domain.Nodes;
+using Limen.Domain.Tunnels;
+using Limen.Application.Common.Options;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Limen.Application.Commands.Nodes;
 
-public sealed record EnrollAgentResult(Guid AgentId, string Secret);
+public sealed record EnrollAgentResult(Guid AgentId, string Secret, WireGuardConfig Wireguard);
 
 public sealed record EnrollAgentCommand(
     string ProvisioningKeyPlaintext,
@@ -20,8 +25,26 @@ internal sealed class EnrollAgentCommandHandler : ICommandHandler<EnrollAgentCom
 {
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
+    private readonly ITunnelCoordinator _tunnels;
+    private readonly IForculusClient _forculus;
+    private readonly IOptions<WgServerSettings> _wgServerSettings;
+    private readonly ILogger<EnrollAgentCommandHandler> _log;
 
-    public EnrollAgentCommandHandler(IAppDbContext db, IClock clock) { _db = db; _clock = clock; }
+    public EnrollAgentCommandHandler(
+        IAppDbContext db,
+        IClock clock,
+        ITunnelCoordinator tunnels,
+        IForculusClient forculus,
+        IOptions<WgServerSettings> wgServerSettings,
+        ILogger<EnrollAgentCommandHandler> log)
+    {
+        _db = db;
+        _clock = clock;
+        _tunnels = tunnels;
+        _forculus = forculus;
+        _wgServerSettings = wgServerSettings;
+        _log = log;
+    }
 
     public async ValueTask<EnrollAgentResult> Handle(EnrollAgentCommand cmd, CancellationToken ct)
     {
@@ -58,11 +81,41 @@ internal sealed class EnrollAgentCommandHandler : ICommandHandler<EnrollAgentCom
             Hostname = cmd.Hostname,
             EnrolledAt = now,
         };
+
+        var tunnelIp = await _tunnels.AllocateTunnelIpAsync(ct);
+        var (pubKey, privKey) = _tunnels.GenerateKeypair();
+        var peer = new WireGuardPeer
+        {
+            Id = Guid.NewGuid(),
+            AgentId = agent.Id,
+            PublicKey = pubKey,
+            TunnelIp = tunnelIp,
+            CreatedAt = now,
+        };
+
         _db.Nodes.Add(node);
         _db.Agents.Add(agent);
+        _db.WireGuardPeers.Add(peer);
         pk.UsedAt = now;
         pk.ResultingNodeId = node.Id;
         await _db.SaveChangesAsync(ct);
-        return new EnrollAgentResult(agent.Id, secret);
+
+        try
+        {
+            await _forculus.UpsertPeerAsync(new Limen.Contracts.ForculusHttp.PeerSpec(pubKey, tunnelIp), ct);
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Failed to push peer {Key} to Forculus at enroll time; reconcile loop will eventually sync it", pubKey);
+        }
+
+        var wg = new WireGuardConfig(
+            InterfaceAddress: tunnelIp,
+            PrivateKey: privKey,
+            ServerPublicKey: _wgServerSettings.Value.PublicKey,
+            ServerEndpoint: _wgServerSettings.Value.Endpoint,
+            KeepaliveSeconds: 25);
+
+        return new EnrollAgentResult(agent.Id, secret, wg);
     }
 }

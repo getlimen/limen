@@ -59,7 +59,7 @@ public static class AgentsWebSocketEndpoint
                 agentId = result.AgentId;
                 await channel.SendJsonAsync(
                     AgentMessageTypes.EnrollResponse,
-                    new EnrollResponse(result.AgentId, result.Secret, string.Empty),
+                    new EnrollResponse(result.AgentId, result.Secret, result.Wireguard),
                     abort);
             }
             else if (type == AgentMessageTypes.Heartbeat)
