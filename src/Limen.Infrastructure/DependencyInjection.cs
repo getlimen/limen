@@ -15,6 +15,7 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Missing ConnectionStrings:Postgres");
 
         services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(cs));
+        services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IClock, SystemClock>();
         return services;
     }
