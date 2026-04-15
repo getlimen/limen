@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <Target Name="PublishAngular" BeforeTargets="PrepareForPublish">
-    <Exec Command="npm ci" WorkingDirectory="../Limen.Frontend" />
+    <Exec Command="npm install" WorkingDirectory="../Limen.Frontend" />
     <Exec Command="npm run build -- --output-path=../Limen.API/wwwroot --base-href=/" WorkingDirectory="../Limen.Frontend" />
   </Target>
 
