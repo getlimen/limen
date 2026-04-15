@@ -12,8 +12,15 @@
 If you're a new agent or contributor, read these in order:
 
 1. **`docs/HANDOFF.md`** — complete context for the project: what was decided, why, what's done, what's left
-2. **`docs/superpowers/specs/2026-04-14-limen-design.md`** — authoritative design spec
-3. **`docs/superpowers/plans/2026-04-14-plan-0X-*.md`** — pick up the next pending plan
+2. **`docs/CONVENTIONS.md`** — ticketing, branches, commits, PRs, code style (strict)
+3. **`docs/superpowers/specs/2026-04-14-limen-design.md`** — authoritative design spec
+4. **`docs/superpowers/plans/2026-04-14-plan-0X-*.md`** — pick up the next pending plan
+
+## Workflow rules (enforced)
+
+- **Never work on `main`.** Create an issue (labeled) → branch `<type>/<issue>_<PascalCaseName>` → PR (labeled) with `Closes #<issue>` → squash-merge + delete branch. Full details in `docs/CONVENTIONS.md`.
+- **Use CLI generators whenever one exists.** `dotnet new`, `dotnet ef migrations add`, `ng new`, `ng generate`, `gh issue create`, `gh pr create`, etc. If you don't know the command, **search online before hand-writing boilerplate** — generators follow current best-practice defaults that hand-rolled files often miss. See `docs/CONVENTIONS.md` § *Use generators and CLI tools*.
+- **No AI / Claude attribution** in commits or PRs. Ever.
 
 ## Project Overview
 
