@@ -4,6 +4,12 @@ using Mediator;
 
 namespace Limen.API.Endpoints;
 
+/// <summary>Request DTO for creating a deployment via the REST API.</summary>
+/// <remarks>
+/// PreviousDeploymentId is intentionally excluded; it is set only by the internal RegistryPollJob.
+/// </remarks>
+public sealed record CreateDeploymentRequest(Guid ServiceId, string ImageDigest, string ImageTag);
+
 public static class DeploymentsEndpoints
 {
     public static IEndpointRouteBuilder MapDeploymentsEndpoints(this IEndpointRouteBuilder app)
@@ -19,8 +25,8 @@ public static class DeploymentsEndpoints
             return logs is null ? Results.NotFound() : Results.Text(logs, "text/plain");
         });
 
-        grp.MapPost("/", async (CreateDeploymentCommand cmd, IMediator m, CancellationToken ct) =>
-            Results.Ok(new { id = await m.Send(cmd, ct) }));
+        grp.MapPost("/", async (CreateDeploymentRequest req, IMediator m, CancellationToken ct) =>
+            Results.Ok(new { id = await m.Send(new CreateDeploymentCommand(req.ServiceId, req.ImageDigest, req.ImageTag, PreviousDeploymentId: null), ct) }));
 
         grp.MapPost("/{id:guid}/cancel", async (Guid id, IMediator m, CancellationToken ct) =>
         {
