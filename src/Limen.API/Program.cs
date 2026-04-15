@@ -98,10 +98,12 @@ if (app.Environment.EnvironmentName != "Testing")
 app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseWebSockets();
 
 app.MapOpenApi();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
+app.MapAgentsWebSocket();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
