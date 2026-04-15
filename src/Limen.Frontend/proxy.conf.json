@@ -1,5 +1,7 @@
 {
-  "/api": { "target": "http://localhost:5000", "secure": false },
-  "/auth": { "target": "http://localhost:5000", "secure": false },
-  "/healthz": { "target": "http://localhost:5000", "secure": false }
+  "/api": { "target": "http://localhost:5098", "secure": false },
+  "/auth": { "target": "http://localhost:5098", "secure": false },
+  "/callback": { "target": "http://localhost:5098", "secure": false },
+  "/openapi": { "target": "http://localhost:5098", "secure": false },
+  "/healthz": { "target": "http://localhost:5098", "secure": false }
 }
