@@ -1,4 +1,5 @@
 using Limen.Application.Common.Interfaces;
+using Limen.Infrastructure.Agents;
 using Limen.Infrastructure.Clock;
 using Limen.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(cs));
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<IAgentConnectionRegistry, AgentConnectionRegistry>();
         return services;
     }
 }
