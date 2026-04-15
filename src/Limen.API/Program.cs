@@ -103,6 +103,7 @@ app.UseWebSockets();
 app.MapOpenApi();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
+app.MapNodesEndpoints();
 app.MapAgentsWebSocket();
 
 app.UseDefaultFiles();
