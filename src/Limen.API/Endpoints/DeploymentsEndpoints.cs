@@ -16,7 +16,7 @@ public static class DeploymentsEndpoints
         grp.MapGet("/{id:guid}/logs", async (Guid id, IMediator m, CancellationToken ct) =>
         {
             var logs = await m.Send(new GetDeploymentLogsQuery(id), ct);
-            return Results.Text(logs, "text/plain");
+            return logs is null ? Results.NotFound() : Results.Text(logs, "text/plain");
         });
 
         grp.MapPost("/", async (CreateDeploymentCommand cmd, IMediator m, CancellationToken ct) =>
