@@ -6,5 +6,6 @@
     <Project Path="src/Limen.Application/Limen.Application.csproj" />
     <Project Path="src/Limen.Domain/Limen.Domain.csproj" />
     <Project Path="src/Limen.Infrastructure/Limen.Infrastructure.csproj" />
+    <Project Path="src/Limen.Tests/Limen.Tests.csproj" />
   </Folder>
 </Solution>
