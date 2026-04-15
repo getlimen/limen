@@ -105,6 +105,7 @@ app.MapHealthEndpoints();
 app.MapAuthEndpoints();
 app.MapNodesEndpoints();
 app.MapAgentsWebSocket();
+app.MapForculusEndpoints();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
