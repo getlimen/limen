@@ -14,6 +14,8 @@ import { AuthService } from '../../core/auth/auth.service';
         <h1 class="text-3xl font-bold">Limen</h1>
         <div class="flex items-center gap-4">
           <a routerLink="/nodes" class="text-sm underline">Nodes</a>
+          <a routerLink="/services" class="text-sm underline">Services</a>
+          <a routerLink="/routes" class="text-sm underline">Routes</a>
           <span class="text-sm text-muted-foreground">{{ auth.admin()?.email }}</span>
           <button hlmBtn variant="outline" size="sm" (click)="auth.signOut()">Sign out</button>
         </div>

@@ -1,5 +1,7 @@
 using Limen.Domain.Auth;
 using Limen.Domain.Nodes;
+using Limen.Domain.Routes;
+using Limen.Domain.Services;
 using Limen.Domain.Tunnels;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,5 +14,7 @@ public interface IAppDbContext
     DbSet<Agent> Agents { get; }
     DbSet<ProvisioningKey> ProvisioningKeys { get; }
     DbSet<WireGuardPeer> WireGuardPeers { get; }
+    DbSet<Service> Services { get; }
+    DbSet<PublicRoute> PublicRoutes { get; }
     Task<int> SaveChangesAsync(CancellationToken ct);
 }

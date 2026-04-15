@@ -1,0 +1,71 @@
+<div class="p-8 min-h-screen bg-muted">
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Services</h1>
+    <div class="flex items-center gap-4">
+      <a routerLink="/nodes" class="text-sm underline">Nodes</a>
+      <a routerLink="/services" class="text-sm underline">Services</a>
+      <a routerLink="/routes" class="text-sm underline">Routes</a>
+      <button hlmBtn (click)="showForm.set(!showForm())">Add service</button>
+    </div>
+  </header>
+
+  @if (showForm()) {
+    <section hlmCard class="mb-6">
+      <header hlmCardHeader>
+        <h2 hlmCardTitle class="text-lg">New service</h2>
+        <p hlmCardDescription>Register a containerised workload on a node.</p>
+      </header>
+      <div hlmCardContent>
+        <form class="grid gap-3 max-w-md" (ngSubmit)="submit()">
+          <input class="border rounded px-3 py-2 text-sm" placeholder="Name" [(ngModel)]="form.name" name="name" required />
+          <input class="border rounded px-3 py-2 text-sm" placeholder="Target node ID (UUID)" [(ngModel)]="form.targetNodeId" name="targetNodeId" required />
+          <input class="border rounded px-3 py-2 text-sm" placeholder="Container name" [(ngModel)]="form.containerName" name="containerName" />
+          <input class="border rounded px-3 py-2 text-sm" type="number" placeholder="Internal port" [(ngModel)]="form.internalPort" name="internalPort" required />
+          <input class="border rounded px-3 py-2 text-sm" placeholder="Image (e.g. nginx:latest)" [(ngModel)]="form.image" name="image" />
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" [(ngModel)]="form.autoDeploy" name="autoDeploy" />
+            Auto-deploy on new image
+          </label>
+          <div class="flex gap-2">
+            <button hlmBtn type="submit">Create</button>
+            <button hlmBtn variant="outline" type="button" (click)="showForm.set(false)">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  }
+
+  <section hlmCard>
+    <header hlmCardHeader>
+      <h2 hlmCardTitle class="text-lg">Registered services</h2>
+    </header>
+    <div hlmCardContent>
+      @if (services().length === 0) {
+        <p class="text-muted-foreground">No services registered yet.</p>
+      } @else {
+        <table class="w-full text-left">
+          <thead class="text-xs text-muted-foreground uppercase">
+            <tr>
+              <th class="py-2">Name</th>
+              <th>Image</th>
+              <th>Port</th>
+              <th>Container</th>
+              <th>Auto-deploy</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of services(); track s.id) {
+              <tr class="border-t">
+                <td class="py-2">{{ s.name }}</td>
+                <td>{{ s.image }}</td>
+                <td>{{ s.internalPort }}</td>
+                <td>{{ s.containerName }}</td>
+                <td>{{ s.autoDeploy ? 'Yes' : 'No' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </section>
+</div>
