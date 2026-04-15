@@ -9,12 +9,12 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Limen.Infrastructure.Persistence.Migrations
+namespace Limen.Infrastructure.Persistence.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+[Migration("20260415103024_DeploymentQueue")]
+partial class DeploymentQueue
 {
-    [DbContext(typeof(AppDbContext))]
-    [Migration("20260415103024_DeploymentQueue")]
-    partial class DeploymentQueue
-    {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -373,4 +373,3 @@ namespace Limen.Infrastructure.Persistence.Migrations
 #pragma warning restore 612, 618
         }
     }
-}
