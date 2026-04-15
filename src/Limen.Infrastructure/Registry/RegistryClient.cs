@@ -1,7 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Limen.Application.Common.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -91,9 +90,10 @@ public sealed class RegistryClient : IRegistryClient
         }
 
         var param = wwwAuth.Parameter ?? string.Empty;
-        var realm = ExtractParam(param, "realm");
-        var service = ExtractParam(param, "service");
-        var scope = ExtractParam(param, "scope");
+        var bearerParams = ParseBearerParams(param);
+        bearerParams.TryGetValue("realm", out var realm);
+        bearerParams.TryGetValue("service", out var service);
+        bearerParams.TryGetValue("scope", out var scope);
 
         if (realm is null)
         {
@@ -137,10 +137,63 @@ public sealed class RegistryClient : IRegistryClient
         }
     }
 
-    private static string? ExtractParam(string param, string name)
+    /// <summary>
+    /// Parses a Bearer WWW-Authenticate parameter string into a case-insensitive dictionary.
+    /// Handles both quoted values (<c>realm="https://..."</c>) and unquoted tokens
+    /// (<c>realm=https://...</c>), as allowed by RFC 7235.
+    /// </summary>
+    private static Dictionary<string, string> ParseBearerParams(string paramString)
     {
-        var match = Regex.Match(param, $@"{name}=""([^""]+)""");
-        return match.Success ? match.Groups[1].Value : null;
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        // Split on commas that are not inside double quotes
+        var tokens = SplitRespectingQuotes(paramString, ',');
+        foreach (var token in tokens)
+        {
+            var chunk = token.Trim();
+            var eqIdx = chunk.IndexOf('=');
+            if (eqIdx <= 0)
+            {
+                continue;
+            }
+
+            var key = chunk[..eqIdx].Trim();
+            var rawValue = chunk[(eqIdx + 1)..].Trim();
+
+            // Strip surrounding double quotes if present
+            string value;
+            if (rawValue.Length >= 2 && rawValue[0] == '"' && rawValue[^1] == '"')
+            {
+                value = rawValue[1..^1];
+            }
+            else
+            {
+                value = rawValue;
+            }
+
+            result[key] = value;
+        }
+
+        return result;
+    }
+
+    private static IEnumerable<string> SplitRespectingQuotes(string input, char delimiter)
+    {
+        var start = 0;
+        var inQuotes = false;
+        for (var i = 0; i < input.Length; i++)
+        {
+            if (input[i] == '"')
+            {
+                inQuotes = !inQuotes;
+            }
+            else if (input[i] == delimiter && !inQuotes)
+            {
+                yield return input[start..i];
+                start = i + 1;
+            }
+        }
+        yield return input[start..];
     }
 
     private static (string registry, string repo, string tag) ParseImage(string image)
