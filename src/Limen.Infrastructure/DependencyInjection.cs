@@ -3,12 +3,16 @@ using Limen.Application.Common.Options;
 using Limen.Application.Services;
 using Limen.Infrastructure.Agents;
 using Limen.Infrastructure.Clock;
+using Limen.Infrastructure.Deployments;
+using Limen.Infrastructure.Jobs;
 using Limen.Infrastructure.Persistence;
 using Limen.Infrastructure.Proxies;
+using Limen.Infrastructure.Registry;
 using Limen.Infrastructure.Tunnels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Quartz;
 
 namespace Limen.Infrastructure;
 
@@ -30,6 +34,20 @@ public static class DependencyInjection
             c.BaseAddress = new Uri(config["Forculus:BaseUrl"] ?? "http://forculus:3004"));
         services.Configure<WgServerSettings>(config.GetSection("Wg"));
         services.Configure<ForculusSettings>(config.GetSection("Forculus"));
+
+        services.AddScoped<IDeploymentDispatcher, DeploymentDispatcher>();
+        services.AddHttpClient<IRegistryClient, RegistryClient>();
+
+        services.AddQuartz(q =>
+        {
+            var key = new JobKey("RegistryPoll");
+            q.AddJob<RegistryPollJob>(opts => opts.WithIdentity(key));
+            q.AddTrigger(t => t
+                .ForJob(key)
+                .WithSimpleSchedule(s => s.WithIntervalInMinutes(5).RepeatForever()));
+        });
+        services.AddQuartzHostedService(o => o.WaitForJobsToComplete = true);
+
         return services;
     }
 }
