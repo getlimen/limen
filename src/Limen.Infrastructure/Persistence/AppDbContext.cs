@@ -1,5 +1,6 @@
 using Limen.Application.Common.Interfaces;
 using Limen.Domain.Auth;
+using Limen.Domain.Nodes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Limen.Infrastructure.Persistence;
@@ -9,6 +10,9 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
     public DbSet<AdminSession> AdminSessions => Set<AdminSession>();
+    public DbSet<Node> Nodes => Set<Node>();
+    public DbSet<Agent> Agents => Set<Agent>();
+    public DbSet<ProvisioningKey> ProvisioningKeys => Set<ProvisioningKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

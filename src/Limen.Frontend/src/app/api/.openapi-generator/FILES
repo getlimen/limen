@@ -1,5 +1,4 @@
 .gitignore
-.openapi-generator-ignore
 README.md
 api.base.service.ts
 api.module.ts
@@ -9,6 +8,7 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
+model/createProvisioningKeyRequest.ts
 model/models.ts
 param.ts
 variables.ts
