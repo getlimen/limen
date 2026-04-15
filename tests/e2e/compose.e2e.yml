@@ -1,0 +1,77 @@
+name: limen-e2e
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: limen
+      POSTGRES_USER: limen
+      POSTGRES_PASSWORD: limen
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U limen"]
+      interval: 5s
+      retries: 10
+
+  limen:
+    image: limen:e2e
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Oidc__Authority: "https://auth.gaggao.com"
+      Oidc__ClientId: "e497f53e-5f73-40ee-9ca0-f6a1a05c41f7"
+      Oidc__CallbackPath: "/callback"
+      Oidc__ClientSecret: ""
+    volumes:
+      - ./appsettings.override.json:/app/appsettings.json:ro
+      - ./appsettings.override.json:/app/appsettings.Development.json:ro
+    ports:
+      - "5098:8080"
+
+  forculus:
+    image: forculus:e2e
+    depends_on:
+      - limen
+    environment:
+      Limen__BaseUrl: "http://limen:8080"
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+    # no host port binding for 51820; agents reach it via docker network in e2e
+
+  limentinus:
+    image: limentinus:e2e
+    depends_on:
+      - forculus
+    environment:
+      LIMEN_CENTRAL_URL: "ws://limen:8080"
+      LIMEN_ROLES: "docker,proxy"
+      LIMEN_PROVISIONING_KEY: "${PROV_KEY:-}"
+      LIMEN_IDENTITY_PATH: "/var/lib/limentinus/identity.json"
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - limentinus_state:/var/lib/limentinus
+
+  backend:
+    image: nginx:alpine
+    # served only to the limen-e2e docker network for now
+
+  ostiarius:
+    image: ostiarius:e2e
+    depends_on:
+      - limen
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: "http://+:80"
+      Ostiarius__ProxyNodeId: "${PROXY_NODE_ID:-}"
+      Ostiarius__AgentSecret: "${PROXY_AGENT_SECRET:-}"
+    volumes:
+      - ./ostiarius-appsettings.json:/app/appsettings.json:ro
+    ports:
+      - "8080:80"
+
+volumes:
+  limentinus_state:
