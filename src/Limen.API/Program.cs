@@ -108,6 +108,7 @@ app.MapAgentsWebSocket();
 app.MapForculusEndpoints();
 app.MapServicesEndpoints();
 app.MapRoutesEndpoints();
+app.MapDeploymentsEndpoints();
 app.MapProxiesWebSocket();
 
 app.UseDefaultFiles();

@@ -20,7 +20,7 @@ public static class ProxiesWebSocketEndpoint
 
     private static async Task<IResult> HandleAsync(
         HttpContext ctx,
-        IAppDbContext db,
+        IServiceScopeFactory scopeFactory,
         IProxyConnectionRegistry registry,
         ProxyConfigPusher pusher,
         ILogger<AgentWebSocketChannel> logger,
@@ -57,27 +57,33 @@ public static class ProxiesWebSocketEndpoint
             return Results.Empty;
         }
 
-        var node = await db.Nodes.FindAsync(new object[] { proxyNodeId }, abort);
-        if (node is null || !node.Roles.Any(r => string.Equals(r, "proxy", StringComparison.OrdinalIgnoreCase)))
+        // Authenticate using a short-lived scope
+        await using (var authScope = scopeFactory.CreateAsyncScope())
         {
-            await channel.SendJsonAsync(ProxyMessageTypes.ProxyAuthResponse, new ProxyAuthResponse(false, "node is not a proxy"), CancellationToken.None);
-            await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "not a proxy node", CancellationToken.None);
-            return Results.Empty;
-        }
+            var db = authScope.ServiceProvider.GetRequiredService<IAppDbContext>();
 
-        var agent = await db.Agents.FirstOrDefaultAsync(a => a.NodeId == proxyNodeId, abort);
-        if (agent is null)
-        {
-            await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "no agent for node", CancellationToken.None);
-            return Results.Empty;
-        }
+            var node = await db.Nodes.FindAsync(new object[] { proxyNodeId }, abort);
+            if (node is null || !node.Roles.Any(r => string.Equals(r, "proxy", StringComparison.OrdinalIgnoreCase)))
+            {
+                await channel.SendJsonAsync(ProxyMessageTypes.ProxyAuthResponse, new ProxyAuthResponse(false, "node is not a proxy"), CancellationToken.None);
+                await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "not a proxy node", CancellationToken.None);
+                return Results.Empty;
+            }
 
-        var secretHash = SHA256.HashData(Encoding.UTF8.GetBytes(authPayload.Secret));
-        if (!agent.SecretHash.SequenceEqual(secretHash))
-        {
-            await channel.SendJsonAsync(ProxyMessageTypes.ProxyAuthResponse, new ProxyAuthResponse(false, "bad secret"), CancellationToken.None);
-            await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "auth failed", CancellationToken.None);
-            return Results.Empty;
+            var agent = await db.Agents.FirstOrDefaultAsync(a => a.NodeId == proxyNodeId, abort);
+            if (agent is null)
+            {
+                await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "no agent for node", CancellationToken.None);
+                return Results.Empty;
+            }
+
+            var secretHash = SHA256.HashData(Encoding.UTF8.GetBytes(authPayload.Secret));
+            if (!agent.SecretHash.SequenceEqual(secretHash))
+            {
+                await channel.SendJsonAsync(ProxyMessageTypes.ProxyAuthResponse, new ProxyAuthResponse(false, "bad secret"), CancellationToken.None);
+                await ws.CloseAsync(WebSocketCloseStatus.PolicyViolation, "auth failed", CancellationToken.None);
+                return Results.Empty;
+            }
         }
 
         await channel.SendJsonAsync(ProxyMessageTypes.ProxyAuthResponse, new ProxyAuthResponse(true, null), abort);

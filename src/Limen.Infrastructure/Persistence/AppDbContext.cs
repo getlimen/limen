@@ -1,5 +1,6 @@
 using Limen.Application.Common.Interfaces;
 using Limen.Domain.Auth;
+using Limen.Domain.Deployments;
 using Limen.Domain.Nodes;
 using Limen.Domain.Routes;
 using Limen.Domain.Services;
@@ -19,6 +20,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     public DbSet<WireGuardPeer> WireGuardPeers => Set<WireGuardPeer>();
     public DbSet<Service> Services => Set<Service>();
     public DbSet<PublicRoute> PublicRoutes => Set<PublicRoute>();
+    public DbSet<Deployment> Deployments => Set<Deployment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
