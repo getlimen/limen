@@ -8,7 +8,10 @@ configuration.ts
 encoder.ts
 git_push.sh
 index.ts
+model/addRouteCommand.ts
 model/createProvisioningKeyRequest.ts
+model/createServiceCommand.ts
+model/createServiceCommandInternalPort.ts
 model/models.ts
 param.ts
 variables.ts

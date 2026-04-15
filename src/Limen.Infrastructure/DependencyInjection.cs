@@ -4,6 +4,7 @@ using Limen.Application.Services;
 using Limen.Infrastructure.Agents;
 using Limen.Infrastructure.Clock;
 using Limen.Infrastructure.Persistence;
+using Limen.Infrastructure.Proxies;
 using Limen.Infrastructure.Tunnels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,7 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IAgentConnectionRegistry, AgentConnectionRegistry>();
+        services.AddSingleton<IProxyConnectionRegistry, ProxyConnectionRegistry>();
         services.AddScoped<ITunnelCoordinator, TunnelCoordinator>();
+        services.AddScoped<ProxyConfigPusher>();
         services.AddHttpClient<IForculusClient, ForculusHttpClient>(c =>
             c.BaseAddress = new Uri(config["Forculus:BaseUrl"] ?? "http://forculus:3004"));
         services.Configure<WgServerSettings>(config.GetSection("Wg"));

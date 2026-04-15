@@ -106,6 +106,9 @@ app.MapAuthEndpoints();
 app.MapNodesEndpoints();
 app.MapAgentsWebSocket();
 app.MapForculusEndpoints();
+app.MapServicesEndpoints();
+app.MapRoutesEndpoints();
+app.MapProxiesWebSocket();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmCard, HlmCardContent, HlmCardDescription, HlmCardHeader, HlmCardTitle } from '@spartan-ng/helm/card';
 import { NodesService, NodeDto, ProvisioningKeyResult } from './nodes.service';
@@ -7,12 +8,17 @@ import { NodesService, NodeDto, ProvisioningKeyResult } from './nodes.service';
 @Component({
   selector: 'limen-nodes',
   standalone: true,
-  imports: [DatePipe, HlmButton, HlmCard, HlmCardContent, HlmCardDescription, HlmCardHeader, HlmCardTitle],
+  imports: [DatePipe, RouterLink, HlmButton, HlmCard, HlmCardContent, HlmCardDescription, HlmCardHeader, HlmCardTitle],
   template: `
     <div class="p-8 min-h-screen bg-muted">
       <header class="flex justify-between items-center mb-6">
         <h1 class="text-3xl font-bold">Nodes</h1>
-        <button hlmBtn (click)="createKey()">Add node</button>
+        <div class="flex items-center gap-4">
+          <a routerLink="/nodes" class="text-sm underline">Nodes</a>
+          <a routerLink="/services" class="text-sm underline">Services</a>
+          <a routerLink="/routes" class="text-sm underline">Routes</a>
+          <button hlmBtn (click)="createKey()">Add node</button>
+        </div>
       </header>
 
       @if (key(); as k) {
