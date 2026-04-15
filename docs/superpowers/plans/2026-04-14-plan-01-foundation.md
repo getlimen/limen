@@ -273,7 +273,7 @@ tests
 ```bash
 cd limen
 git add LICENSE .gitignore .editorconfig .dockerignore Directory.Build.props
-git commit -m "chore: repo boilerplate (license, gitignore, editorconfig)"
+git commit -m "Repo boilerplate (license, gitignore, editorconfig)"
 ```
 
 ---
@@ -373,7 +373,7 @@ Expected: `Build succeeded`.
 
 ```bash
 git add Limen.slnx contracts/
-git commit -m "feat(contracts): initial Limen.Contracts project with Envelope and ConfigVersion"
+git commit -m "Initial Limen.Contracts project with Envelope and ConfigVersion"
 ```
 
 ---
@@ -439,7 +439,7 @@ Expected: `Build succeeded`.
 
 ```bash
 git add src/Limen.Domain/
-git commit -m "feat(domain): AdminSession entity"
+git commit -m "AdminSession entity"
 ```
 
 ---
@@ -606,7 +606,7 @@ Expected: `Build succeeded`.
 
 ```bash
 git add src/Limen.Application/
-git commit -m "feat(application): Mediator setup with Validation + Logging behaviors"
+git commit -m "Mediator setup with Validation + Logging behaviors"
 ```
 
 ---
@@ -751,7 +751,7 @@ Expected: `Build succeeded`.
 
 ```bash
 git add src/Limen.Infrastructure/
-git commit -m "feat(infra): AppDbContext, AdminSession config, SystemClock, DI root"
+git commit -m "AppDbContext, AdminSession config, SystemClock, DI root"
 ```
 
 ---
@@ -856,7 +856,7 @@ Expected: PASS.
 
 ```bash
 git add src/Limen.Tests/
-git commit -m "test(infra): Testcontainers-backed AppDbContext integration test"
+git commit -m "Testcontainers-backed AppDbContext integration test"
 ```
 
 ---
@@ -1097,7 +1097,7 @@ Expected: PASS.
 
 ```bash
 git add src/Limen.API/ src/Limen.Tests/
-git commit -m "feat(api): /healthz endpoint + Program.cs + Serilog + global exception middleware"
+git commit -m "/healthz endpoint + Program.cs + Serilog + global exception middleware"
 ```
 
 ---
@@ -1132,7 +1132,7 @@ Expect: `AppDbContextModelSnapshot.cs`, `<timestamp>_Initial.cs`, `<timestamp>_I
 
 ```bash
 git add src/Limen.Infrastructure/Persistence/Migrations/
-git commit -m "feat(infra): initial EF migration for AdminSessions table"
+git commit -m "Initial EF migration for AdminSessions table"
 ```
 
 ---
@@ -1460,7 +1460,7 @@ Expected: all PASS.
 
 ```bash
 git add src/ contracts/
-git commit -m "feat(auth): OIDC login flow — HandleOidcCallbackCommand, SignOutCommand, GetCurrentAdminQuery, /auth/* endpoints"
+git commit -m "OIDC login flow — HandleOidcCallbackCommand, SignOutCommand, GetCurrentAdminQuery, /auth/* endpoints"
 ```
 
 ---
@@ -1666,7 +1666,7 @@ Edit `src/Limen.API/Limen.API.csproj` to copy built Angular assets:
 ```bash
 cd ../..
 git add src/Limen.Frontend/ src/Limen.API/
-git commit -m "feat(frontend): Angular 21 shell with Tailwind 4, spartan.ng, auth service + guard, login + dashboard"
+git commit -m "Angular 21 shell with Tailwind 4, spartan.ng, auth service + guard, login + dashboard"
 ```
 
 ---
@@ -1785,7 +1785,7 @@ Expected: `Applying migration '<timestamp>_Initial'. Done.`
 ```bash
 docker compose -f compose.dev.yml down
 git add src/Limen.API/Dockerfile compose.yml compose.dev.yml template.env
-git commit -m "feat(deploy): Dockerfile + compose.yml + dev overrides"
+git commit -m "Dockerfile + compose.yml + dev overrides"
 ```
 
 ---
@@ -1852,7 +1852,7 @@ jobs:
 
 ```bash
 git add .github/workflows/ci.yml
-git commit -m "ci: build, test, and push Docker image to ghcr.io on main"
+git commit -m "Build, test, and push Docker image to ghcr.io on main"
 ```
 
 ---

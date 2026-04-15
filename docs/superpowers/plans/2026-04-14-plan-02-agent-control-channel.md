@@ -96,7 +96,7 @@ public sealed record HeartbeatAck(ulong ServerVersion);
 cd limen
 dotnet build contracts/Limen.Contracts/Limen.Contracts.csproj
 git add contracts/
-git commit -m "feat(contracts): agent message types (EnrollRequest/Response, Heartbeat)"
+git commit -m "Agent message types (EnrollRequest/Response, Heartbeat)"
 ```
 
 ---
@@ -246,7 +246,7 @@ dotnet ef migrations add Nodes --project src/Limen.Infrastructure --startup-proj
 ```bash
 dotnet build
 git add src/
-git commit -m "feat(domain): Node, Agent, ProvisioningKey entities + migration"
+git commit -m "Node, Agent, ProvisioningKey entities + migration"
 ```
 
 ---
@@ -345,7 +345,7 @@ internal sealed class CreateProvisioningKeyCommandHandler : ICommandHandler<Crea
 ```bash
 dotnet test --filter "CreateProvisioningKeyCommandTests"
 git add src/
-git commit -m "feat(app): CreateProvisioningKeyCommand (one-shot, 15 min TTL)"
+git commit -m "CreateProvisioningKeyCommand (one-shot, 15 min TTL)"
 ```
 
 ---
@@ -457,7 +457,7 @@ internal sealed class EnrollAgentCommandHandler : ICommandHandler<EnrollAgentCom
 ```bash
 dotnet test --filter "EnrollAgentCommandTests"
 git add src/
-git commit -m "feat(app): EnrollAgentCommand — validates provisioning key, creates Node+Agent, burns key"
+git commit -m "EnrollAgentCommand — validates provisioning key, creates Node+Agent, burns key"
 ```
 
 ---
@@ -524,7 +524,7 @@ services.AddSingleton<IAgentConnectionRegistry, AgentConnectionRegistry>();
 
 ```bash
 git add src/
-git commit -m "feat(app/infra): IAgentConnectionRegistry + in-memory registry"
+git commit -m "IAgentConnectionRegistry + in-memory registry"
 ```
 
 ---
@@ -688,7 +688,7 @@ app.MapAgentsWebSocket();
 
 ```bash
 git add src/
-git commit -m "feat(ws): /api/agents/ws endpoint with enrollment + heartbeat loop"
+git commit -m "/api/agents/ws endpoint with enrollment + heartbeat loop"
 ```
 
 ---
@@ -802,7 +802,7 @@ Add route:
 
 ```bash
 git add src/
-git commit -m "feat(nodes): ListNodesQuery, provisioning-key creation endpoint, Nodes UI with polling"
+git commit -m "ListNodesQuery, provisioning-key creation endpoint, Nodes UI with polling"
 ```
 
 ---
@@ -879,7 +879,7 @@ Add to each project that needs contracts:
 
 ```bash
 git add .
-git commit -m "chore: scaffold Limentinus solution (Domain, Application, Infrastructure, API worker, Tests)"
+git commit -m "Scaffold Limentinus solution (Domain, Application, Infrastructure, API worker, Tests)"
 ```
 
 ---
@@ -1159,7 +1159,7 @@ volumes:
 ```bash
 dotnet build
 git add .
-git commit -m "feat: Limentinus worker with enrollment + WS heartbeat loop"
+git commit -m "Limentinus worker with enrollment + WS heartbeat loop"
 ```
 
 ---
@@ -1201,7 +1201,7 @@ Refresh the nodes page in the browser; new node should appear with status `Activ
 
 ```bash
 git add .
-git commit -m "docs: Plan 2 complete — agent enrollment + WS heartbeat end-to-end"
+git commit -m "Plan 2 complete — agent enrollment + WS heartbeat end-to-end"
 git push
 ```
 

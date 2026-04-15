@@ -27,26 +27,30 @@ These are the rules everyone (humans or AI assistants) follows when contributing
 
 ### Title (subject line)
 
-- **Format:** `<type>: <short imperative>` OR plain `<short imperative>` when the type is obvious from context.
-- **Types:** `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `ci`, `build`, `perf`.
-- **Do NOT use scope-parens.** No `feat(foo):`, no `fix(bar):` — keep the prefix plain.
+- **Format:** plain imperative sentence. No `type:` prefixes. No scope-parens.
+  - ❌ `feat: Add X`
+  - ❌ `feat(foo): Add X`
+  - ❌ `fix(bar): Handle Y`
+  - ❌ `docs: Update README`
+  - ✅ `Add X`
+  - ✅ `Handle Y when Z is null`
+  - ✅ `Update README with install instructions`
 - **Sentence case.** Imperative mood ("Add X", not "Added X" or "Adds X").
 - **Target 50 chars, hard cap 72.** Longer titles get truncated in GitHub listings.
 - **No trailing period.**
 - **No AI / Claude attribution anywhere** — not in title, not in body, not in trailers. Hard rule.
 
-Acceptable forms:
+Good examples:
 
 ```
-feat: Add restorePaused option to transferPlaybackHere
-fix: Keep enum values() and valueOf() methods under proguard
-docs: Document restorePaused option for transferPlaybackHere
-refactor: Extract route-table builder from YARP config provider
+Add restorePaused option to transferPlaybackHere
+Keep enum values() and valueOf() methods under proguard
+Document restorePaused option for transferPlaybackHere
+Extract route-table builder from YARP config provider
 Add Song.searchSuggestions + extend SearchResult with playlists
 Default hasPremium to false when product field is absent
+Wire OIDC authentication into Program.cs
 ```
-
-Bare titles (no `type:`) are fine when the change's nature is self-evident. Prefer the explicit `type:` form for anything ambiguous.
 
 ### Body
 
@@ -79,7 +83,7 @@ Bare titles (no `type:`) are fine when the change's nature is self-evident. Pref
 ### Full example (body style to mimic)
 
 ```
-feat: Add restorePaused option to transferPlaybackHere
+Add restorePaused option to transferPlaybackHere
 
 PlayerConnect.transferBetween hardcoded restore_paused: "restore" so
 every transfer auto-resumes playback. The Spotify web player uses
