@@ -14,7 +14,7 @@ import { AuthService } from '../../core/auth/auth.service';
   standalone: true,
   imports: [HlmButton, HlmCard, HlmCardHeader, HlmCardTitle, HlmCardDescription, HlmCardContent],
   template: `
-    <div class="min-h-screen flex items-center justify-center bg-background p-4">
+    <div class="min-h-screen flex items-center justify-center bg-muted p-4">
       <section hlmCard class="w-full max-w-sm">
         <header hlmCardHeader>
           <h1 hlmCardTitle class="text-2xl">Limen</h1>
