@@ -14,6 +14,8 @@ public sealed record CreateDeploymentCommand(
 
 internal sealed class CreateDeploymentCommandHandler : ICommandHandler<CreateDeploymentCommand, Guid>
 {
+    private const string UniqueViolationSqlState = "23505";
+
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
     private readonly IDeploymentDispatcher _dispatcher;
@@ -63,7 +65,29 @@ internal sealed class CreateDeploymentCommandHandler : ICommandHandler<CreateDep
         };
 
         _db.Deployments.Add(deployment);
-        await _db.SaveChangesAsync(ct);
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        {
+            _log.LogInformation("Deployment dedup race detected for service {ServiceId} / digest {Digest}; returning winner", cmd.ServiceId, cmd.ImageDigest);
+
+            var winner = await _db.Deployments
+                .Where(d => d.ServiceId == cmd.ServiceId
+                    && d.ImageDigest == cmd.ImageDigest
+                    && (d.Status == DeploymentStatus.Queued || d.Status == DeploymentStatus.InProgress))
+                .Select(d => d.Id)
+                .FirstOrDefaultAsync(ct);
+
+            if (winner != Guid.Empty)
+            {
+                return winner;
+            }
+
+            throw;
+        }
 
         try
         {
@@ -75,5 +99,25 @@ internal sealed class CreateDeploymentCommandHandler : ICommandHandler<CreateDep
         }
 
         return deployment.Id;
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex)
+    {
+        var inner = ex.InnerException;
+        if (inner is null)
+        {
+            return false;
+        }
+
+        // Check for Npgsql.PostgresException.SqlState without a direct assembly reference.
+        // PostgresException exposes SqlState as a string property.
+        var sqlStateProp = inner.GetType().GetProperty("SqlState");
+        if (sqlStateProp is not null)
+        {
+            var sqlState = sqlStateProp.GetValue(inner) as string;
+            return sqlState == UniqueViolationSqlState;
+        }
+
+        return false;
     }
 }

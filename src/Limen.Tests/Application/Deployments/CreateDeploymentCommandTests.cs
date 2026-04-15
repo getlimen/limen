@@ -1,8 +1,12 @@
 using FluentAssertions;
 using Limen.Application.Commands.Deployments;
 using Limen.Application.Common.Interfaces;
+using Limen.Domain.Auth;
 using Limen.Domain.Deployments;
+using Limen.Domain.Nodes;
+using Limen.Domain.Routes;
 using Limen.Domain.Services;
+using Limen.Domain.Tunnels;
 using Limen.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -182,5 +186,95 @@ public sealed class CreateDeploymentCommandTests
 
         id.Should().NotBe(Guid.Empty);
         (await db.Deployments.CountAsync()).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Race_DbUpdateException_UniqueViolation_ReturnsWinner()
+    {
+        // Arrange: use a wrapper IAppDbContext that throws a unique-violation DbUpdateException
+        // on the deployment INSERT, simulating a concurrent INSERT winning the race.
+        var opts = new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options;
+        var realDb = new AppDbContext(opts);
+
+        var clock = Substitute.For<IClock>();
+        var now = new DateTimeOffset(2026, 04, 15, 12, 0, 0, TimeSpan.Zero);
+        clock.UtcNow.Returns(now);
+        var dispatcher = Substitute.For<IDeploymentDispatcher>();
+
+        var service = new Service
+        {
+            Id = Guid.NewGuid(),
+            Name = "race-svc",
+            TargetNodeId = Guid.NewGuid(),
+            ContainerName = "race-container",
+            InternalPort = 8080,
+            Image = "nginx:latest",
+            AutoDeploy = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        realDb.Services.Add(service);
+        realDb.SaveChanges();
+
+        // Seed the "winner" deployment that the concurrent insert already created
+        var winner = new Deployment
+        {
+            Id = Guid.NewGuid(),
+            ServiceId = service.Id,
+            TargetNodeId = service.TargetNodeId,
+            ImageDigest = "sha256:race",
+            ImageTag = "latest",
+            Status = DeploymentStatus.Queued,
+            QueuedAt = now,
+        };
+        realDb.Deployments.Add(winner);
+        realDb.SaveChanges();
+
+        // Wrap the real context so SaveChangesAsync throws unique-violation once
+        var wrappingDb = new UniqueViolationOnSaveDbContext(realDb);
+
+        var handler = new CreateDeploymentCommandHandler(wrappingDb, clock, dispatcher, NullLogger<CreateDeploymentCommandHandler>.Instance);
+
+        // Act
+        var resultId = await handler.Handle(
+            new CreateDeploymentCommand(service.Id, "sha256:race", "latest"),
+            CancellationToken.None);
+
+        // Assert: handler must return the winner's id without rethrowing
+        resultId.Should().Be(winner.Id);
+    }
+
+    /// <summary>
+    /// Wraps a real AppDbContext, forwarding all DbSet access but throwing a
+    /// unique-violation DbUpdateException on the first SaveChangesAsync call.
+    /// </summary>
+    private sealed class UniqueViolationOnSaveDbContext(AppDbContext inner) : IAppDbContext
+    {
+        private bool _shouldThrow = true;
+
+        public DbSet<AdminSession> AdminSessions => inner.AdminSessions;
+        public DbSet<Node> Nodes => inner.Nodes;
+        public DbSet<Agent> Agents => inner.Agents;
+        public DbSet<ProvisioningKey> ProvisioningKeys => inner.ProvisioningKeys;
+        public DbSet<WireGuardPeer> WireGuardPeers => inner.WireGuardPeers;
+        public DbSet<Service> Services => inner.Services;
+        public DbSet<PublicRoute> PublicRoutes => inner.PublicRoutes;
+        public DbSet<Deployment> Deployments => inner.Deployments;
+
+        public Task<int> SaveChangesAsync(CancellationToken ct)
+        {
+            if (_shouldThrow)
+            {
+                _shouldThrow = false;
+                throw new DbUpdateException("simulated unique violation",
+                    new FakeSqlStateException("23505"));
+            }
+            return inner.SaveChangesAsync(ct);
+        }
+    }
+
+    private sealed class FakeSqlStateException(string sqlState) : Exception("simulated pg exception")
+    {
+        // The handler detects unique violations by reading this property via reflection.
+        public string SqlState { get; } = sqlState;
     }
 }
