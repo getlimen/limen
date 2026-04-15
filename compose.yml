@@ -1,0 +1,32 @@
+name: limen
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: limen
+      POSTGRES_USER: limen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - limen_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U limen"]
+      interval: 10s
+      retries: 5
+
+  limen:
+    image: ghcr.io/getlimen/limen:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ConnectionStrings__Postgres: "Host=postgres;Database=limen;Username=limen;Password=${POSTGRES_PASSWORD}"
+      Oidc__Authority: ${OIDC_AUTHORITY}
+      Oidc__ClientId: ${OIDC_CLIENT_ID}
+      Oidc__ClientSecret: ${OIDC_CLIENT_SECRET}
+    ports:
+      - "8080:8080"
+
+volumes:
+  limen_pg:

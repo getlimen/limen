@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/contracts/">
+    <Project Path="contracts/Limen.Contracts/Limen.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Limen.API/Limen.API.csproj" />
+    <Project Path="src/Limen.Application/Limen.Application.csproj" />
+    <Project Path="src/Limen.Domain/Limen.Domain.csproj" />
+    <Project Path="src/Limen.Infrastructure/Limen.Infrastructure.csproj" />
+    <Project Path="src/Limen.Tests/Limen.Tests.csproj" />
+  </Folder>
+</Solution>
