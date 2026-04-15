@@ -40,51 +40,54 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 #region Database Initialization with Retry Logic
-var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
-bool dbConnected = false;
-int retryCount = 0;
-const int maxRetries = 10;
-const int retryDelaySeconds = 5;
-
-while (!dbConnected && retryCount < maxRetries)
+if (app.Environment.EnvironmentName != "Testing")
 {
-    try
+    var startupLogger = app.Services.GetRequiredService<ILogger<Program>>();
+    bool dbConnected = false;
+    int retryCount = 0;
+    const int maxRetries = 10;
+    const int retryDelaySeconds = 5;
+
+    while (!dbConnected && retryCount < maxRetries)
     {
-        using var scope = app.Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        startupLogger.LogInformation("Attempting database connection and migrations (Attempt {Attempt}/{MaxRetries})...", retryCount + 1, maxRetries);
-        dbContext.Database.Migrate();
-        dbConnected = true;
-        startupLogger.LogInformation("Database connection successful and migrations applied.");
-    }
-    catch (NpgsqlException ex)
-    {
-        startupLogger.LogError(ex, "Database connection failed: {ErrorMessage}", ex.Message);
-        retryCount++;
-        if (retryCount < maxRetries)
+        try
         {
-            startupLogger.LogInformation("Retrying in {Delay} seconds...", retryDelaySeconds);
-            Thread.Sleep(TimeSpan.FromSeconds(retryDelaySeconds));
+            using var scope = app.Services.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            startupLogger.LogInformation("Attempting database connection and migrations (Attempt {Attempt}/{MaxRetries})...", retryCount + 1, maxRetries);
+            dbContext.Database.Migrate();
+            dbConnected = true;
+            startupLogger.LogInformation("Database connection successful and migrations applied.");
         }
-        else
+        catch (NpgsqlException ex)
         {
-            startupLogger.LogCritical("Failed to connect to the database after {MaxRetries} retries. Application will terminate.", maxRetries);
-            throw;
+            startupLogger.LogError(ex, "Database connection failed: {ErrorMessage}", ex.Message);
+            retryCount++;
+            if (retryCount < maxRetries)
+            {
+                startupLogger.LogInformation("Retrying in {Delay} seconds...", retryDelaySeconds);
+                Thread.Sleep(TimeSpan.FromSeconds(retryDelaySeconds));
+            }
+            else
+            {
+                startupLogger.LogCritical("Failed to connect to the database after {MaxRetries} retries. Application will terminate.", maxRetries);
+                throw;
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        startupLogger.LogError(ex, "Unexpected error during database setup: {ErrorMessage}", ex.Message);
-        retryCount++;
-        if (retryCount < maxRetries)
+        catch (Exception ex)
         {
-            startupLogger.LogInformation("Retrying in {Delay} seconds...", retryDelaySeconds);
-            Thread.Sleep(TimeSpan.FromSeconds(retryDelaySeconds));
-        }
-        else
-        {
-            startupLogger.LogCritical("Database operations failed after {MaxRetries} retries.", maxRetries);
-            throw;
+            startupLogger.LogError(ex, "Unexpected error during database setup: {ErrorMessage}", ex.Message);
+            retryCount++;
+            if (retryCount < maxRetries)
+            {
+                startupLogger.LogInformation("Retrying in {Delay} seconds...", retryDelaySeconds);
+                Thread.Sleep(TimeSpan.FromSeconds(retryDelaySeconds));
+            }
+            else
+            {
+                startupLogger.LogCritical("Database operations failed after {MaxRetries} retries.", maxRetries);
+                throw;
+            }
         }
     }
 }
