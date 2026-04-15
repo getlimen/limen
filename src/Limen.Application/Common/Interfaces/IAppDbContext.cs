@@ -1,4 +1,5 @@
 using Limen.Domain.Auth;
+using Limen.Domain.Deployments;
 using Limen.Domain.Nodes;
 using Limen.Domain.Routes;
 using Limen.Domain.Services;
@@ -16,5 +17,6 @@ public interface IAppDbContext
     DbSet<WireGuardPeer> WireGuardPeers { get; }
     DbSet<Service> Services { get; }
     DbSet<PublicRoute> PublicRoutes { get; }
+    DbSet<Deployment> Deployments { get; }
     Task<int> SaveChangesAsync(CancellationToken ct);
 }
