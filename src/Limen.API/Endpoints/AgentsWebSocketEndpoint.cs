@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Limen.Application.Commands.Deployments;
 using Limen.Application.Commands.Nodes;
 using Limen.Application.Common.Interfaces;
 using Limen.Contracts.AgentMessages;
@@ -135,6 +136,18 @@ public static class AgentsWebSocketEndpoint
                     node.LastSeenAt = DateTimeOffset.UtcNow;
                     await db.SaveChangesAsync(abort);
                     await channel.SendJsonAsync(AgentMessageTypes.HeartbeatAck, new HeartbeatAck(0), abort);
+                }
+                else if (msgType == AgentMessageTypes.DeployProgress)
+                {
+                    var progress = msg.RootElement.GetProperty("Payload").Deserialize<DeployProgress>()!;
+                    await mediator.Send(new ReportDeploymentProgressCommand(
+                        progress.DeploymentId, progress.Stage, progress.Message, progress.PercentComplete), abort);
+                }
+                else if (msgType == AgentMessageTypes.DeployResult)
+                {
+                    var result = msg.RootElement.GetProperty("Payload").Deserialize<DeployResult>()!;
+                    await mediator.Send(new ReportDeploymentResultCommand(
+                        result.DeploymentId, result.Success, result.RolledBackReason), abort);
                 }
             }
         }
