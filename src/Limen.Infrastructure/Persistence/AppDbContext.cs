@@ -21,6 +21,10 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     public DbSet<Service> Services => Set<Service>();
     public DbSet<PublicRoute> PublicRoutes => Set<PublicRoute>();
     public DbSet<Deployment> Deployments => Set<Deployment>();
+    public DbSet<ResourceAuthPolicy> ResourceAuthPolicies => Set<ResourceAuthPolicy>();
+    public DbSet<AllowlistedEmail> AllowlistedEmails => Set<AllowlistedEmail>();
+    public DbSet<MagicLink> MagicLinks => Set<MagicLink>();
+    public DbSet<IssuedToken> IssuedTokens => Set<IssuedToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
