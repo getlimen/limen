@@ -259,6 +259,12 @@ public sealed class CreateDeploymentCommandTests
         public DbSet<Service> Services => inner.Services;
         public DbSet<PublicRoute> PublicRoutes => inner.PublicRoutes;
         public DbSet<Deployment> Deployments => inner.Deployments;
+        public DbSet<ResourceAuthPolicy> ResourceAuthPolicies => inner.ResourceAuthPolicies;
+        public DbSet<AllowlistedEmail> AllowlistedEmails => inner.AllowlistedEmails;
+        public DbSet<MagicLink> MagicLinks => inner.MagicLinks;
+        public DbSet<IssuedToken> IssuedTokens => inner.IssuedTokens;
+
+        public bool SupportsBulkUpdate => ((IAppDbContext)inner).SupportsBulkUpdate;
 
         public Task<int> SaveChangesAsync(CancellationToken ct)
         {

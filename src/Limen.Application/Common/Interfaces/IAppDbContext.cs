@@ -18,5 +18,12 @@ public interface IAppDbContext
     DbSet<Service> Services { get; }
     DbSet<PublicRoute> PublicRoutes { get; }
     DbSet<Deployment> Deployments { get; }
+    DbSet<ResourceAuthPolicy> ResourceAuthPolicies { get; }
+    DbSet<AllowlistedEmail> AllowlistedEmails { get; }
+    DbSet<MagicLink> MagicLinks { get; }
+    DbSet<IssuedToken> IssuedTokens { get; }
     Task<int> SaveChangesAsync(CancellationToken ct);
+
+    /// <summary>True when the underlying provider supports bulk operations like ExecuteUpdateAsync.</summary>
+    bool SupportsBulkUpdate { get; }
 }

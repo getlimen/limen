@@ -103,6 +103,7 @@ app.UseWebSockets();
 app.MapOpenApi();
 app.MapHealthEndpoints();
 app.MapAuthEndpoints();
+app.MapResourceAuthEndpoints();
 app.MapNodesEndpoints();
 app.MapAgentsWebSocket();
 app.MapForculusEndpoints();
