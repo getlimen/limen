@@ -5,6 +5,7 @@
       <a routerLink="/nodes" class="text-sm underline">Nodes</a>
       <a routerLink="/services" class="text-sm underline">Services</a>
       <a routerLink="/routes" class="text-sm underline">Routes</a>
+      <a routerLink="/deployments" class="text-sm underline">Deployments</a>
       <button hlmBtn (click)="showForm.set(!showForm())">Add service</button>
     </div>
   </header>
@@ -51,6 +52,7 @@
               <th>Port</th>
               <th>Container</th>
               <th>Auto-deploy</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -61,7 +63,30 @@
                 <td>{{ s.internalPort }}</td>
                 <td>{{ s.containerName }}</td>
                 <td>{{ s.autoDeploy ? 'Yes' : 'No' }}</td>
+                <td class="py-2">
+                  <button hlmBtn variant="outline" size="sm" (click)="openDeployForm(s)">Deploy now</button>
+                </td>
               </tr>
+              @if (deployFormServiceId() === s.id) {
+                <tr class="border-t bg-muted/50">
+                  <td colspan="6" class="py-3 px-2">
+                    <form class="flex flex-wrap items-end gap-3" (ngSubmit)="submitDeploy(s.id)">
+                      <div class="grid gap-1">
+                        <label class="text-xs text-muted-foreground">Image tag</label>
+                        <input class="border rounded px-3 py-1.5 text-sm" placeholder="e.g. latest" [(ngModel)]="deployForm.imageTag" name="imageTag" required />
+                      </div>
+                      <div class="grid gap-1">
+                        <label class="text-xs text-muted-foreground">Image digest (sha256:...)</label>
+                        <input class="border rounded px-3 py-1.5 text-sm w-80" placeholder="sha256:..." [(ngModel)]="deployForm.imageDigest" name="imageDigest" required />
+                      </div>
+                      <div class="flex gap-2">
+                        <button hlmBtn type="submit" size="sm">Deploy</button>
+                        <button hlmBtn variant="outline" size="sm" type="button" (click)="closeDeployForm()">Cancel</button>
+                      </div>
+                    </form>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
