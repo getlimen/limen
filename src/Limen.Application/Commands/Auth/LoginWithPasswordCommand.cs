@@ -16,6 +16,10 @@ public sealed record LoginWithPasswordCommand(
 internal sealed class LoginWithPasswordCommandHandler
     : ICommandHandler<LoginWithPasswordCommand, LoginWithPasswordResult?>
 {
+    // A real Argon2id hash of an empty string; used only for timing equalization when no policy exists.
+    // The result is always discarded — this is never a valid credential.
+    private const string DummyHash = "$argon2id$v=19$m=65536,t=3,p=1$YWJjZGVmZ2hpams=$dummyhashdummyhashdummyhashdumx=";
+
     private readonly IAppDbContext _db;
     private readonly IClock _clock;
     private readonly IPasswordHasher _hasher;
@@ -40,6 +44,7 @@ internal sealed class LoginWithPasswordCommandHandler
 
         if (policy is null || policy.Mode != "password" || policy.PasswordHash is null)
         {
+            _ = _hasher.Verify(cmd.Password, DummyHash); // timing equalizer; result ignored
             return null;
         }
 
