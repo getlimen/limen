@@ -31,6 +31,12 @@ internal sealed class InitiateMagicLinkCommandHandler : ICommandHandler<Initiate
 
     public async ValueTask<Unit> Handle(InitiateMagicLinkCommand cmd, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(_opt.Value.PublicBaseUrl))
+        {
+            throw new InvalidOperationException(
+                "AuthSettings.PublicBaseUrl must be configured to send magic links.");
+        }
+
         var policy = await _db.ResourceAuthPolicies
             .FirstOrDefaultAsync(p => p.RouteId == cmd.RouteId, ct);
 
