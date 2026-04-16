@@ -24,7 +24,15 @@ public sealed class MagicLinkSender : IMagicLinkSender
         var smtp = _opt.Value.Smtp;
         if (smtp is null || string.IsNullOrEmpty(smtp.Host))
         {
-            _logger.LogInformation("Magic link for {Email} on {Hostname}: {Url}", email, routeHostname, magicUrl);
+            // OPERATOR-VISIBLE dev fallback — must NEVER be used in production.
+            // Requires Auth:LogMagicLinksInDev = true to be explicitly set.
+            if (!_opt.Value.LogMagicLinksInDev)
+            {
+                throw new InvalidOperationException(
+                    "SMTP not configured and LogMagicLinksInDev is disabled; cannot deliver magic link.");
+            }
+
+            _logger.LogDebug("Magic link for {Email} on {Hostname}: {Url}", email, routeHostname, magicUrl);
             return;
         }
 
