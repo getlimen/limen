@@ -1,0 +1,82 @@
+<div class="p-8 min-h-screen bg-muted">
+  <header class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold">Deployment Detail</h1>
+    <div class="flex items-center gap-4">
+      <a routerLink="/nodes" class="text-sm underline">Nodes</a>
+      <a routerLink="/services" class="text-sm underline">Services</a>
+      <a routerLink="/routes" class="text-sm underline">Routes</a>
+      <a routerLink="/deployments" class="text-sm underline">Deployments</a>
+    </div>
+  </header>
+
+  @if (deployment()) {
+    <section hlmCard class="mb-6">
+      <header hlmCardHeader>
+        <h2 hlmCardTitle class="text-lg">Metadata</h2>
+        <p hlmCardDescription>{{ id }}</p>
+      </header>
+      <div hlmCardContent>
+        <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm max-w-lg">
+          <dt class="text-muted-foreground">Service ID</dt>
+          <dd>{{ deployment()!.serviceId }}</dd>
+
+          <dt class="text-muted-foreground">Image Tag</dt>
+          <dd>{{ deployment()!.imageTag }}</dd>
+
+          <dt class="text-muted-foreground">Image Digest</dt>
+          <dd class="font-mono text-xs break-all">{{ deployment()!.imageDigest }}</dd>
+
+          <dt class="text-muted-foreground">Target Node</dt>
+          <dd>{{ deployment()!.targetNodeId }}</dd>
+
+          <dt class="text-muted-foreground">Status</dt>
+          <dd [class]="statusClass(deployment()!.status)">{{ deployment()!.status }}</dd>
+
+          <dt class="text-muted-foreground">Stage</dt>
+          <dd>{{ deployment()!.currentStage }}</dd>
+
+          <dt class="text-muted-foreground">Queued</dt>
+          <dd>{{ deployment()!.queuedAt | date:'medium' }}</dd>
+
+          @if (deployment()!.startedAt) {
+            <dt class="text-muted-foreground">Started</dt>
+            <dd>{{ deployment()!.startedAt | date:'medium' }}</dd>
+          }
+
+          @if (deployment()!.endedAt) {
+            <dt class="text-muted-foreground">Ended</dt>
+            <dd>{{ deployment()!.endedAt | date:'medium' }}</dd>
+          }
+        </dl>
+
+        <div class="flex gap-3 mt-4">
+          <a routerLink="/deployments" hlmBtn variant="outline" size="sm">Back to list</a>
+          @if (!isTerminal(deployment()!.status)) {
+            <button hlmBtn variant="outline" size="sm" (click)="cancel()">Cancel deployment</button>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section hlmCard>
+      <header hlmCardHeader>
+        <h2 hlmCardTitle class="text-lg">Logs</h2>
+      </header>
+      <div hlmCardContent>
+        @if (logLines().length === 0) {
+          <p class="text-muted-foreground text-sm">No logs yet.</p>
+        } @else {
+          <div
+            #logContainer
+            class="bg-black text-green-400 font-mono text-xs rounded p-4 overflow-y-auto max-h-96 whitespace-pre-wrap break-words">
+            @for (line of logLines(); track $index) {
+              <div>{{ parseLogLine(line) }}</div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  } @else {
+    <p class="text-muted-foreground">Loading deployment...</p>
+  }
+</div>
