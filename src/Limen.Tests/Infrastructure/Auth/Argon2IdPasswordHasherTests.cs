@@ -1,11 +1,12 @@
 using FluentAssertions;
 using Limen.Infrastructure.Auth;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Limen.Tests.Infrastructure.Auth;
 
 public sealed class Argon2IdPasswordHasherTests
 {
-    private readonly Argon2IdPasswordHasher _hasher = new();
+    private readonly Argon2IdPasswordHasher _hasher = new(NullLogger<Argon2IdPasswordHasher>.Instance);
 
     [Fact]
     public void Hash_and_verify_round_trip()
