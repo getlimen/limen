@@ -23,4 +23,7 @@ public interface IAppDbContext
     DbSet<MagicLink> MagicLinks { get; }
     DbSet<IssuedToken> IssuedTokens { get; }
     Task<int> SaveChangesAsync(CancellationToken ct);
+
+    /// <summary>True when the underlying provider supports bulk operations like ExecuteUpdateAsync.</summary>
+    bool SupportsBulkUpdate { get; }
 }

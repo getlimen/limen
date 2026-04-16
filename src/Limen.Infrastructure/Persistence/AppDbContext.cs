@@ -33,4 +33,8 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     }
 
     Task<int> IAppDbContext.SaveChangesAsync(CancellationToken ct) => base.SaveChangesAsync(ct);
+
+    bool IAppDbContext.SupportsBulkUpdate =>
+        Database.ProviderName is not null
+        && !Database.ProviderName.Contains("InMemory", StringComparison.OrdinalIgnoreCase);
 }

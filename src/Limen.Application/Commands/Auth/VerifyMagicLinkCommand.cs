@@ -53,7 +53,24 @@ internal sealed class VerifyMagicLinkCommandHandler
             return null;
         }
 
-        magicLink.UsedAt = now;
+        // Atomic conditional update to prevent double-use race: only one concurrent request wins.
+        // Falls back to tracked update for providers that do not support ExecuteUpdateAsync (e.g. in-memory for tests).
+        int affected;
+        if (_db.SupportsBulkUpdate)
+        {
+            affected = await _db.MagicLinks
+                .Where(m => m.Id == magicLink.Id && m.UsedAt == null)
+                .ExecuteUpdateAsync(s => s.SetProperty(m => m.UsedAt, now), ct);
+        }
+        else
+        {
+            // In-memory provider fallback — still correct for single-instance test scenarios.
+            if (magicLink.UsedAt is not null) { return null; }
+            magicLink.UsedAt = now;
+            affected = 1;
+        }
+
+        if (affected == 0) { return null; } // lost the race or already used
 
         var (jwt, jti, exp) = _jwt.Build(cmd.RouteId, magicLink.Email, "allowlist", policy.CookieScope);
 

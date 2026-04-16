@@ -264,6 +264,8 @@ public sealed class CreateDeploymentCommandTests
         public DbSet<MagicLink> MagicLinks => inner.MagicLinks;
         public DbSet<IssuedToken> IssuedTokens => inner.IssuedTokens;
 
+        public bool SupportsBulkUpdate => ((IAppDbContext)inner).SupportsBulkUpdate;
+
         public Task<int> SaveChangesAsync(CancellationToken ct)
         {
             if (_shouldThrow)
