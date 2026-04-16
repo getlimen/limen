@@ -1,12 +1,14 @@
 using System.Text.Json;
 using Limen.Application.Commands.Auth;
 using Limen.Application.Common.Interfaces;
+using Limen.Application.Common.Options;
 using Limen.Application.Queries.Auth;
 using Limen.Application.Services;
 using Limen.Domain.Auth;
 using Mediator;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Limen.API.Endpoints;
 
@@ -20,6 +22,7 @@ public static class ResourceAuthEndpoints
             HttpContext ctx,
             [FromBody] LoginWithPasswordRequest req,
             IMediator mediator,
+            IOptions<AuthSettings> authOptions,
             CancellationToken ct) =>
         {
             var result = await mediator.Send(
@@ -29,7 +32,7 @@ public static class ResourceAuthEndpoints
                 return Results.Unauthorized();
             }
 
-            ctx.Response.Cookies.Append("limen_session", result.Jwt, BuildCookie(result.ExpiresAt));
+            ctx.Response.Cookies.Append("limen_session", result.Jwt, BuildCookie(result.ExpiresAt, authOptions.Value.CookieSecure));
             return Results.Ok(new { ok = true, expiresAt = result.ExpiresAt, redirect = req.ReturnTo ?? "/" });
         });
 
@@ -48,6 +51,7 @@ public static class ResourceAuthEndpoints
             string? returnTo,
             HttpContext ctx,
             IMediator mediator,
+            IOptions<AuthSettings> authOptions,
             CancellationToken ct) =>
         {
             var result = await mediator.Send(new VerifyMagicLinkCommand(token, routeId), ct);
@@ -56,7 +60,7 @@ public static class ResourceAuthEndpoints
                 return Results.BadRequest("Invalid or expired magic link.");
             }
 
-            ctx.Response.Cookies.Append("limen_session", result.Jwt, BuildCookie(result.ExpiresAt));
+            ctx.Response.Cookies.Append("limen_session", result.Jwt, BuildCookie(result.ExpiresAt, authOptions.Value.CookieSecure));
             return Results.Redirect(returnTo ?? "/");
         });
 
@@ -88,6 +92,8 @@ public static class ResourceAuthEndpoints
             HttpContext ctx,
             IAppDbContext db,
             JwtBuilder jwtBuilder,
+            ITokenSigner signer,
+            IOptions<AuthSettings> authOptions,
             IClock clock,
             CancellationToken ct) =>
         {
@@ -97,11 +103,12 @@ public static class ResourceAuthEndpoints
                 return Results.Unauthorized();
             }
 
-            var parts = sessionCookie.Split('.');
-            if (parts.Length != 3)
+            if (!signer.Verify(sessionCookie))
             {
                 return Results.Unauthorized();
             }
+
+            var parts = sessionCookie.Split('.');
 
             Dictionary<string, JsonElement>? claims;
             try
@@ -131,6 +138,14 @@ public static class ResourceAuthEndpoints
             }
 
             var email = subEl.GetString() ?? string.Empty;
+            var authMethod = authMethodEl.GetString();
+            var cookieScope = cookieScopeEl.GetString();
+
+            if (authMethod is null || cookieScope is null)
+            {
+                return Results.Unauthorized();
+            }
+
             var token = await db.IssuedTokens.FindAsync([jti], ct);
 
             if (token is null || token.RevokedAt is not null || token.ExpiresAt <= clock.UtcNow)
@@ -138,8 +153,6 @@ public static class ResourceAuthEndpoints
                 return Results.Unauthorized();
             }
 
-            var authMethod = authMethodEl.GetString() ?? "password";
-            var cookieScope = cookieScopeEl.GetString() ?? "strict";
             var (newJwt, newJti, newExp) = jwtBuilder.Build(routeId, email, authMethod, cookieScope);
 
             db.IssuedTokens.Add(new IssuedToken
@@ -152,33 +165,30 @@ public static class ResourceAuthEndpoints
             });
 
             await db.SaveChangesAsync(ct);
-            ctx.Response.Cookies.Append("limen_session", newJwt, BuildCookie(newExp));
+            ctx.Response.Cookies.Append("limen_session", newJwt, BuildCookie(newExp, authOptions.Value.CookieSecure));
             return Results.Ok(new { ok = true, expiresAt = newExp });
         });
 
-        grp.MapPost("/signout", async (HttpContext ctx, IMediator mediator, CancellationToken ct) =>
+        grp.MapPost("/signout", async (HttpContext ctx, IMediator mediator, ITokenSigner signer, CancellationToken ct) =>
         {
             var sessionCookie = ctx.Request.Cookies["limen_session"];
-            if (!string.IsNullOrEmpty(sessionCookie))
+            if (!string.IsNullOrEmpty(sessionCookie) && signer.Verify(sessionCookie))
             {
                 var parts = sessionCookie.Split('.');
-                if (parts.Length == 3)
+                try
                 {
-                    try
+                    var payloadJson = Base64UrlDecode(parts[1]);
+                    var claims = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(payloadJson);
+                    if (claims is not null
+                        && claims.TryGetValue("jti", out var jtiEl)
+                        && Guid.TryParse(jtiEl.GetString(), out var jti))
                     {
-                        var payloadJson = Base64UrlDecode(parts[1]);
-                        var claims = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(payloadJson);
-                        if (claims is not null
-                            && claims.TryGetValue("jti", out var jtiEl)
-                            && Guid.TryParse(jtiEl.GetString(), out var jti))
-                        {
-                            await mediator.Send(new RevokeTokenCommand(jti), ct);
-                        }
+                        await mediator.Send(new RevokeTokenCommand(jti), ct);
                     }
-                    catch
-                    {
-                        // swallow parse errors — still delete cookie
-                    }
+                }
+                catch
+                {
+                    // swallow parse errors — still delete cookie
                 }
             }
 
@@ -198,10 +208,10 @@ public static class ResourceAuthEndpoints
         return app;
     }
 
-    private static CookieOptions BuildCookie(DateTimeOffset exp) => new()
+    private static CookieOptions BuildCookie(DateTimeOffset exp, bool secure = true) => new()
     {
         HttpOnly = true,
-        Secure = true,
+        Secure = secure,
         SameSite = SameSiteMode.Lax,
         Path = "/",
         Expires = exp,

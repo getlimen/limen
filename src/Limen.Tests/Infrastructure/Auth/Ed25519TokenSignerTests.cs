@@ -63,6 +63,48 @@ public sealed class Ed25519TokenSignerTests : IDisposable
         signer2.PublicKeyBytes.Should().Equal(publicKeyBytesFirst);
     }
 
+    [Fact]
+    public void Verify_AcceptsValidJwt()
+    {
+        using var signer = new Ed25519TokenSigner(_keyPath, "test-kid");
+
+        var header = new Dictionary<string, object> { ["alg"] = "EdDSA", ["typ"] = "JWT" };
+        var payload = new Dictionary<string, object> { ["sub"] = "user@example.com", ["exp"] = 9999999999L };
+
+        var jwt = signer.SignJwt(header, payload);
+
+        signer.Verify(jwt).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Verify_RejectsTamperedPayload()
+    {
+        using var signer = new Ed25519TokenSigner(_keyPath, "test-kid");
+
+        var header = new Dictionary<string, object> { ["alg"] = "EdDSA", ["typ"] = "JWT" };
+        var payload = new Dictionary<string, object> { ["sub"] = "user@example.com", ["exp"] = 9999999999L };
+
+        var jwt = signer.SignJwt(header, payload);
+        var parts = jwt.Split('.');
+        var tamperedPayload = Base64UrlEncode(System.Text.Encoding.UTF8.GetBytes("""{"sub":"attacker@x.com"}"""));
+        var tampered = $"{parts[0]}.{tamperedPayload}.{parts[2]}";
+
+        signer.Verify(tampered).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Verify_RejectsMalformedJwt()
+    {
+        using var signer = new Ed25519TokenSigner(_keyPath, "test-kid");
+
+        signer.Verify("not.a.valid.jwt.at.all").Should().BeFalse();
+        signer.Verify("only.two").Should().BeFalse();
+        signer.Verify(string.Empty).Should().BeFalse();
+    }
+
+    private static string Base64UrlEncode(byte[] b) =>
+        Convert.ToBase64String(b).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
     private static byte[] Base64UrlDecode(string input)
     {
         var padded = input.Replace('-', '+').Replace('_', '/');
