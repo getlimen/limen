@@ -34,7 +34,7 @@ public static class ResourceAuthEndpoints
 
             ctx.Response.Cookies.Append("limen_session", result.Jwt, BuildCookie(result.ExpiresAt, authOptions.Value.CookieSecure));
             return Results.Ok(new { ok = true, expiresAt = result.ExpiresAt, redirect = req.ReturnTo ?? "/" });
-        });
+        }).RequireRateLimiting("login");
 
         grp.MapPost("/magic-request", async (
             [FromBody] MagicRequestRequest req,
@@ -43,7 +43,7 @@ public static class ResourceAuthEndpoints
         {
             await mediator.Send(new InitiateMagicLinkCommand(req.RouteId, req.Email), ct);
             return Results.Ok(new { ok = true });
-        });
+        }).RequireRateLimiting("login");
 
         grp.MapGet("/magic/{token}", async (
             string token,
@@ -167,7 +167,7 @@ public static class ResourceAuthEndpoints
             await db.SaveChangesAsync(ct);
             ctx.Response.Cookies.Append("limen_session", newJwt, BuildCookie(newExp, authOptions.Value.CookieSecure));
             return Results.Ok(new { ok = true, expiresAt = newExp });
-        });
+        }).RequireRateLimiting("login");
 
         grp.MapPost("/signout", async (HttpContext ctx, IMediator mediator, ITokenSigner signer, CancellationToken ct) =>
         {

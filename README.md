@@ -40,6 +40,10 @@ Then:
 4. In the UI, add a Service (Docker image) and a Route (public hostname)
 5. Point DNS to your proxy node → traffic is live with auto TLS
 
+## Backup
+
+See [`docs/operations/backup-restore.md`](docs/operations/backup-restore.md).
+
 ## Architecture
 
 See [`docs/superpowers/specs/2026-04-14-limen-design.md`](docs/superpowers/specs/2026-04-14-limen-design.md).
