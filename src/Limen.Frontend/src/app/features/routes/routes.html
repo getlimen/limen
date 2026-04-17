@@ -54,6 +54,7 @@
               <th class="py-2">Hostname</th>
               <th>TLS</th>
               <th>Auth policy</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +63,73 @@
                 <td class="py-2">{{ r.hostname }}</td>
                 <td>{{ r.tlsEnabled ? 'Yes' : 'No' }}</td>
                 <td>{{ r.authPolicy }}</td>
+                <td class="py-2">
+                  <button hlmBtn variant="outline" size="sm" (click)="togglePolicyEditor(r.id)">Edit auth policy</button>
+                </td>
               </tr>
+              @if (expandedRouteId() === r.id && getPolicyForm(r.id)) {
+                <tr class="border-t bg-muted/50">
+                  <td colspan="4" class="py-3 px-2">
+                    <form class="grid gap-3 max-w-md" (ngSubmit)="savePolicyEditor(r.id)">
+                      <div class="grid gap-1">
+                        <label class="text-xs text-muted-foreground">Auth mode</label>
+                        <select
+                          class="border rounded px-3 py-2 text-sm"
+                          [ngModel]="getPolicyForm(r.id)!.mode"
+                          (ngModelChange)="updatePolicyFormField(r.id, 'mode', $event)"
+                          name="policyMode"
+                        >
+                          <option value="none">none</option>
+                          <option value="password">password</option>
+                          <option value="sso">sso</option>
+                          <option value="allowlist">allowlist</option>
+                        </select>
+                      </div>
+                      @if (getPolicyForm(r.id)!.mode === 'password') {
+                        <div class="grid gap-1">
+                          <label class="text-xs text-muted-foreground">Password</label>
+                          <input
+                            class="border rounded px-3 py-2 text-sm"
+                            type="password"
+                            placeholder="Leave blank to keep existing"
+                            [ngModel]="getPolicyForm(r.id)!.password"
+                            (ngModelChange)="updatePolicyFormField(r.id, 'password', $event)"
+                            name="policyPassword"
+                          />
+                        </div>
+                      }
+                      <div class="grid gap-1">
+                        <label class="text-xs text-muted-foreground">Cookie scope</label>
+                        <select
+                          class="border rounded px-3 py-2 text-sm"
+                          [ngModel]="getPolicyForm(r.id)!.cookieScope"
+                          (ngModelChange)="updatePolicyFormField(r.id, 'cookieScope', $event)"
+                          name="policyCookieScope"
+                        >
+                          <option value="strict">strict</option>
+                          <option value="domain">domain</option>
+                        </select>
+                      </div>
+                      @if (getPolicyForm(r.id)!.mode === 'allowlist') {
+                        <div class="grid gap-1">
+                          <label class="text-xs text-muted-foreground">Allowed emails (one per line or comma-separated)</label>
+                          <textarea
+                            class="border rounded px-3 py-2 text-sm h-24"
+                            placeholder="user@example.com"
+                            [ngModel]="getPolicyForm(r.id)!.allowedEmailsText"
+                            (ngModelChange)="updatePolicyFormField(r.id, 'allowedEmailsText', $event)"
+                            name="policyAllowedEmails"
+                          ></textarea>
+                        </div>
+                      }
+                      <div class="flex gap-2">
+                        <button hlmBtn type="submit" size="sm">Save</button>
+                        <button hlmBtn variant="outline" size="sm" type="button" (click)="cancelPolicyEditor()">Cancel</button>
+                      </div>
+                    </form>
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>
