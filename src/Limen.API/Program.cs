@@ -4,8 +4,10 @@ using Limen.Application.Common;
 using Limen.Infrastructure;
 using Limen.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +38,17 @@ builder.Services.AddAuthentication(options =>
     }
 });
 builder.Services.AddAuthorization();
+
+builder.Services.AddRateLimiter(opts =>
+{
+    opts.AddFixedWindowLimiter("login", options =>
+    {
+        options.PermitLimit = 10;
+        options.Window = TimeSpan.FromMinutes(1);
+        options.QueueLimit = 0;
+    });
+    opts.RejectionStatusCode = 429;
+});
 #endregion
 
 var app = builder.Build();
@@ -95,7 +108,9 @@ if (app.Environment.EnvironmentName != "Testing")
 #endregion
 
 #region Configure HTTP Pipeline
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseWebSockets();
