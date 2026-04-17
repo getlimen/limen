@@ -14,4 +14,6 @@ WORKDIR /app
 COPY --from=build /app .
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+RUN adduser --disabled-password --gecos "" --home /app appuser && chown -R appuser:appuser /app
+USER appuser
 ENTRYPOINT ["dotnet", "Limen.API.dll"]
