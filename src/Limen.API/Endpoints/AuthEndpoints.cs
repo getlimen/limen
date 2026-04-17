@@ -14,7 +14,13 @@ public static class AuthEndpoints
         var grp = app.MapGroup("/auth");
 
         grp.MapGet("/login", (HttpContext ctx) =>
-            Results.Challenge(new AuthenticationProperties { RedirectUri = "/auth/complete" }, new[] { "oidc" }));
+        {
+            if (ctx.Request.Query.TryGetValue("routeId", out var routeId) && Guid.TryParse(routeId, out _))
+            {
+                return Results.Redirect("/resource-login" + ctx.Request.QueryString);
+            }
+            return Results.Challenge(new AuthenticationProperties { RedirectUri = "/auth/complete" }, new[] { "oidc" });
+        });
 
         grp.MapGet("/complete", async (HttpContext ctx, IMediator mediator) =>
         {
